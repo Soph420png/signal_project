@@ -5,12 +5,13 @@ import java.util.Random;
 import com.cardio_generator.outputs.OutputStrategy;
 
 public class AlertGenerator implements PatientDataGenerator {
-
-    public static final Random randomGenerator = new Random();
+    // Changed field name from randomGenerator since static final mutable objects are not constants, should use lowerCamelCase, not constant-style naming
+    public static final Random random = new Random();
     private boolean[] AlertStates; // false = resolved, true = pressed
 
+    // Changed field name from AlertStates because non-constant fields use lowerCamelCase
     public AlertGenerator(int patientCount) {
-        AlertStates = new boolean[patientCount + 1];
+        alertStates = new boolean[patientCount + 1];
     }
 
     @Override
@@ -19,11 +20,12 @@ public class AlertGenerator implements PatientDataGenerator {
             if (AlertStates[patientId]) {
                 if (randomGenerator.nextDouble() < 0.9) { // 90% chance to resolve
                     AlertStates[patientId] = false;
-                    // Output the alert
+                    // remuved comment because of redundancy, method call already shows output
                     outputStrategy.output(patientId, System.currentTimeMillis(), "Alert", "resolved");
                 }
             } else {
-                double Lambda = 0.1; // Average rate (alerts per period), adjust based on desired frequency
+                // Local vaiables use lowerCamelCase Lambda to lambda
+                double lambda = 0.1; // Average rate (alerts per period), adjust based on desired frequency
                 double p = -Math.expm1(-Lambda); // Probability of at least one alert in the period
                 boolean alertTriggered = randomGenerator.nextDouble() < p;
 
