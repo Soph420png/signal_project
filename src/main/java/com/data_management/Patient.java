@@ -52,7 +52,20 @@ public class Patient {
      *         range
      */
     public List<PatientRecord> getRecords(long startTime, long endTime) {
-        // TODO Implement and test this method
-        return this.patientRecords;
+        // Assuming that the requested time range is inclusive on both ends
+        // reasoning is that "between start and end" is ambiguous
+        // so i assumed the range should include both endpoints, which is common for logs and queries.
+        if (startTime > endTime) {
+            return new ArrayList<>();
+        }
+
+        List<PatientRecord> filtered = new ArrayList<>();
+        for (PatientRecord record : this.patientRecords) {
+            long ts = record.getTimestamp();
+            if (ts >= startTime && ts <= endTime) {
+                filtered.add(record);
+            }
+        }
+        return filtered;
     }
 }

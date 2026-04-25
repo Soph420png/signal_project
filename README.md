@@ -72,6 +72,24 @@ This repository includes UML class diagrams and documentation for four subsystem
 These diagrams model how patient data is received, stored, matched to hospital records and evaluated for alerts. 
 The UML diagrams and explanations are available in the [`uml_models`](uml_models/) directory.
 
+## Tests & Code Coverage
+
+### Running unit tests
+Run:
+mvn clean test
+Expected: `BUILD SUCCESS` and all tests pass.
+### Generating JaCoCo coverage report
+Run:
+mvn clean test
+Then open:
+target/site/jacoco/index.html
+### Coverage notes 
+- Requirement focused on patient storage and alert evaluation, so unit tests primarily cover `com.data_management` and `com.alerts`.
+- The simulator and output components (`com.cardio_generator.*)` are not fully tested because they are time-based, 
+  random, and/or require network or long-running execution so they are better suited to integration testing (I think).
+### Screenshots
+Screnshots for unit tests and coverage reports are available in the  [`tests_week3`](tests_week3/) directory.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
