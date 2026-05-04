@@ -7,19 +7,15 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-/**
- * The {@code AlertGenerator} class is responsible for monitoring patient data
- * and generating alerts when certain predefined conditions are met. This class
- * relies on a {@link DataStorage} instance to access patient data and evaluate
- * it against specific health criteria.
- */
 public class AlertGenerator {
     private DataStorage dataStorage;
     private final List<Alert> triggeredAlerts = new ArrayList<>();
+    private final List<AlertStrategy> strategies = List.of(
+            new BloodPressureStrategy(),
+            new OxygenSaturationStrategy(),
+            new HeartRateStrategy());
     /**
      * Constructs an {@code AlertGenerator} with a specified {@code DataStorage}.
      * The {@code DataStorage} is used to retrieve patient data that this class
@@ -53,10 +49,9 @@ public class AlertGenerator {
         }
         all.sort(Comparator.comparingLong(PatientRecord::getTimestamp));
 
-        evaluateBloodPressure(all);
-        evaluateSaturation(all);
-        evaluateHypotensiveHypoxemia(all);
-        evaluateEcg(all);
+        for (AlertStrategy strategy : strategies) {
+            strategy.checkAlert(all, this::triggerAlert);
+        }
         evaluateManualAlert(all);
     }
 
@@ -72,9 +67,24 @@ public class AlertGenerator {
         if (alert == null) {
             return;
         }
-        triggeredAlerts.add(alert);
-        System.out.println("ALERT: patient=" + alert.getPatientId() + " condition=" + alert.getCondition() + " ts="
-                + alert.getTimestamp());
+        Alert decorated = decorateAlert(alert);
+        triggeredAlerts.add(decorated);
+        System.out.println("ALERT: patient=" + decorated.getPatientId() + " condition=" + decorated.getCondition() + " ts="
+                + decorated.getTimestamp());
+    }
+
+    private static Alert decorateAlert(Alert alert) {
+        String c = alert.getCondition();
+        Alert out = alert;
+        if ("CRITICAL_SYSTOLIC_PRESSURE".equals(c)
+                || "CRITICAL_DIASTOLIC_PRESSURE".equals(c)
+                || "HYPOTENSIVE_HYPOXEMIA".equals(c)) {
+            out = new PriorityAlertDecorator(out, 10);
+        }
+        if ("LOW_SATURATION".equals(c) || "RAPID_SATURATION_DROP".equals(c)) {
+            out = new RepeatedAlertDecorator(out, 60_000L);
+        }
+        return out;
     }
     /**
      * Returns alerts that were triggered during evaluation.
@@ -90,23 +100,27 @@ public class AlertGenerator {
         // Critical thresholds
         for (PatientRecord r : sys) {
             if (r.getMeasurementValue() > 180.0 || r.getMeasurementValue() < 90.0) {
-                triggerAlert(new Alert(Integer.toString(r.getPatientId()), "CRITICAL_SYSTOLIC_PRESSURE", r.getTimestamp()));
+                triggerAlert(AlertFactory.create(Integer.toString(r.getPatientId()),
+                        "CRITICAL_SYSTOLIC_PRESSURE", r.getTimestamp()));
             }
         }
         for (PatientRecord r : dia) {
             if (r.getMeasurementValue() > 120.0 || r.getMeasurementValue() < 60.0) {
-                triggerAlert(new Alert(Integer.toString(r.getPatientId()), "CRITICAL_DIASTOLIC_PRESSURE", r.getTimestamp()));
+                triggerAlert(AlertFactory.create(Integer.toString(r.getPatientId()),
+                        "CRITICAL_DIASTOLIC_PRESSURE", r.getTimestamp()));
             }
         }
 
         // Trend: 3 consecutive readings, each step changes by >10 in same direction
         if (hasTrend(sys, true)) {
             PatientRecord last = sys.get(sys.size() - 1);
-            triggerAlert(new Alert(Integer.toString(last.getPatientId()), "SYSTOLIC_TREND_ALERT", last.getTimestamp()));
+            triggerAlert(AlertFactory.create(Integer.toString(last.getPatientId()),
+                    "SYSTOLIC_TREND_ALERT", last.getTimestamp()));
         }
         if (hasTrend(dia, false)) {
             PatientRecord last = dia.get(dia.size() - 1);
-            triggerAlert(new Alert(Integer.toString(last.getPatientId()), "DIASTOLIC_TREND_ALERT", last.getTimestamp()));
+            triggerAlert(AlertFactory.create(Integer.toString(last.getPatientId()),
+                    "DIASTOLIC_TREND_ALERT", last.getTimestamp()));
         }
     }
 
@@ -118,7 +132,8 @@ public class AlertGenerator {
 
         for (PatientRecord r : sat) {
             if (r.getMeasurementValue() < 92.0) {
-                triggerAlert(new Alert(Integer.toString(r.getPatientId()), "LOW_SATURATION", r.getTimestamp()));
+                triggerAlert(AlertFactory.create(Integer.toString(r.getPatientId()),
+                        "LOW_SATURATION", r.getTimestamp()));
             }
         }
 
@@ -134,8 +149,8 @@ public class AlertGenerator {
             for (int k = i; k < j; k++) {
                 double drop = sat.get(k).getMeasurementValue() - sat.get(j).getMeasurementValue();
                 if (drop >= 5.0) {
-                    triggerAlert(new Alert(Integer.toString(sat.get(j).getPatientId()), "RAPID_SATURATION_DROP",
-                            sat.get(j).getTimestamp()));
+                    triggerAlert(AlertFactory.create(Integer.toString(sat.get(j).getPatientId()),
+                            "RAPID_SATURATION_DROP", sat.get(j).getTimestamp()));
                     return;
                 }
             }
@@ -159,7 +174,8 @@ public class AlertGenerator {
             long t = s.getTimestamp();
             for (PatientRecord o : sat) {
                 if (Math.abs(o.getTimestamp() - t) <= tenMinutesMs && o.getMeasurementValue() < 92.0) {
-                    triggerAlert(new Alert(Integer.toString(s.getPatientId()), "HYPOTENSIVE_HYPOXEMIA", Math.max(t, o.getTimestamp())));
+                    triggerAlert(AlertFactory.create(Integer.toString(s.getPatientId()),
+                            "HYPOTENSIVE_HYPOXEMIA", Math.max(t, o.getTimestamp())));
                     return;
                 }
             }
@@ -200,7 +216,8 @@ public class AlertGenerator {
 
             // "far beyond the current average": use a conservative z-score style threshold
             if (std > 0.0001 && Math.abs(v - mean) > 3.5 * std) {
-                triggerAlert(new Alert(Integer.toString(r.getPatientId()), "ABNORMAL_ECG_PEAK", r.getTimestamp()));
+                triggerAlert(AlertFactory.create(Integer.toString(r.getPatientId()),
+                        "ABNORMAL_ECG_PEAK", r.getTimestamp()));
                 return;
             }
         }
@@ -212,7 +229,8 @@ public class AlertGenerator {
             if (r.getMeasurementValue() >= 1.0) {
                 // I assume that manual alerts are represented in storage as numeric state (1.0=triggered, 0.0=resolved),
                 // produced by FileDataReader when reading the simulators Alert output lines
-                triggerAlert(new Alert(Integer.toString(r.getPatientId()), "MANUAL_ALERT_TRIGGERED", r.getTimestamp()));
+                triggerAlert(AlertFactory.create(Integer.toString(r.getPatientId()),
+                        "MANUAL_ALERT_TRIGGERED", r.getTimestamp()));
                 return;
             }
         }

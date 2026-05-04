@@ -88,7 +88,7 @@ target/site/jacoco/index.html
 - The simulator and output components (`com.cardio_generator.*)` are not fully tested because they are time-based, 
   random, and/or require network or long-running execution so they are better suited to integration testing (I think).
 ### Screenshots
-Screnshots for unit tests and coverage reports are available in the  [`tests_week3`](tests_week3/) directory.
+Screnshots for unit tests and coverage reports are available in the  [`tests_week3`](tests_and_reports/) directory.
 
 ## License
 

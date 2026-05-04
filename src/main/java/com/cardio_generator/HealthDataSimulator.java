@@ -32,6 +32,23 @@ import java.util.ArrayList;
  * tasks to generate different types of patient data.
  */
 public class HealthDataSimulator {
+    private static volatile HealthDataSimulator instance;
+
+    private HealthDataSimulator() {
+    }
+    public static HealthDataSimulator getInstance() {
+        HealthDataSimulator local = instance;
+        if (local == null) {
+            synchronized (HealthDataSimulator.class) {
+                local = instance;
+                if (local == null) {
+                    local = new HealthDataSimulator();
+                    instance = local;
+                }
+            }
+        }
+        return local;
+    }
 
     private static int patientCount = 50; // Default number of patients
     private static ScheduledExecutorService scheduler;
