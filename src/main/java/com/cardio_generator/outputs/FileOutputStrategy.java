@@ -30,10 +30,10 @@ public class FileOutputStrategy implements OutputStrategy {
      * Writes one generated patient data entry to a file based on its label.
      * <p>If the base directory does not exist its created before writing.
      * Data is appended to a text file associated with the given label.
-     * @param patientId: the unique identifier of the patient
-     * @param timestamp: the time at which the data was generated, in milliseconds since the Unix epoch
-     * @param label: the type of data being output, like Alert or Saturation
-     * @param data: the generated value or message to output
+     * @param patientId the unique identifier of the patient
+     * @param timestamp the time at which the data was generated, in milliseconds since the Unix epoch
+     * @param label the type of data being output, like Alert or Saturation
+     * @param data the generated value or message to output
      */
     @Override
     public void output(int patientId, long timestamp, String label, String data) {

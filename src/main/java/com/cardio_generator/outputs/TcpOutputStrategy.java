@@ -43,10 +43,10 @@ public class TcpOutputStrategy implements OutputStrategy {
      * Sends one generated patient data entry to the connected TCP client.
      * <p>The output format is a string containing the patient ID, timestamp, label, and data value.
      * If no client is connected, no data is sent.
-     * @param patientId: the unique identifier of the patient
-     * @param timestamp: the time at which the data was generated, in milliseconds since the Unix epoch
-     * @param label: the type of data being output, like Alert or Saturation
-     * @param data: the generated value or message to output
+     * @param patientId the unique identifier of the patient
+     * @param timestamp the time at which the data was generated, in milliseconds since the Unix epoch
+     * @param label the type of data being output, like Alert or Saturation
+     * @param data the generated value or message to output
      */
     @Override
     public void output(int patientId, long timestamp, String label, String data) {

@@ -27,8 +27,8 @@ public class AlertGenerator implements PatientDataGenerator {
      * <p>If the patient already has an active alert, there is a high probability
      * that the alert will be resolved. If the patient does not have an active
      * alert, a new alert may be triggered based on the configured rate.
-     * @param patientId: the unique identifier of the patient for whom data is generated
-     * @param outputStrategy: the strategy used to output the generated data
+     * @param patientId the unique identifier of the patient for whom data is generated
+     * @param outputStrategy the strategy used to output the generated data
      */
     @Override
     public void generate(int patientId, OutputStrategy outputStrategy) {

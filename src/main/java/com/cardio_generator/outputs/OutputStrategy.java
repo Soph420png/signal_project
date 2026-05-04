@@ -7,10 +7,10 @@ package com.cardio_generator.outputs;
 public interface OutputStrategy {
     /**
      * Outputs one generated data value for a patient.
-     * @param patientId: the unique identifier of the patient
-     * @param timestamp: the time at which the data was generated, in milliseconds since the Unix epoch
-     * @param label: the type of data being output, like Alert or Saturation
-     * @param data: the generated value or message to output
+     * @param patientId the unique identifier of the patient
+     * @param timestamp the time at which the data was generated, in milliseconds since the Unix epoch
+     * @param label the type of data being output, like Alert or Saturation
+     * @param data the generated value or message to output
      */
     void output(int patientId, long timestamp, String label, String data);
 }
